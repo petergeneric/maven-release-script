@@ -87,7 +87,7 @@ fi
 
 
 # Prompt for next version (or compute it automatically if requested)
-NEXT_VERSION_DEFAULT=$(echo "$RELEASE_VERSION" | perl -pe 's{^(([0-9]\.)+)([0-9]+)$}{$1 . ($3 + 1)}e')
+NEXT_VERSION_DEFAULT=$(echo "$RELEASE_VERSION" | perl -pe 's{^(([0-9]\.)+)?([0-9]+)$}{$1 . ($3 + 1)}e')
 if [ -z "$NEXT_VERSION" ] ; then
 	read -p "Next snapshot version [${NEXT_VERSION_DEFAULT}]" NEXT_VERSION
 	
