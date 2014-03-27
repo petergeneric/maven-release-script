@@ -13,6 +13,16 @@ function die_unless_xmllint_has_xpath() {
 	fi
 }
 
+function rollback_and_die_with() {
+	echo "$*" >&2
+	
+	echo "Resetting release commit to return you to the same working state as before attempting a deploy"
+	echo "> git reset --hard HEAD^1"
+	git reset --hard HEAD^1 || echo "Git reset command failed!"
+	
+	exit 1
+}
+
 function usage() {
 	echo "Maven git release script v1.0 (c) 2014 Peter Wright"
 	echo ""
@@ -27,6 +37,10 @@ function usage() {
 	echo "  -h    For this message"
 	echo ""
 }
+
+###############################
+# HANDLE COMMAND-LINE OPTIONS #
+###############################
 
 while getopts "hr:n:c:" o; do
     case "${o}" in
@@ -51,6 +65,9 @@ while getopts "hr:n:c:" o; do
 done
 shift $((OPTIND-1))
 
+#########################################
+# BAIL IF THERE ARE UNCOMMITTED CHANGES #
+#########################################
 
 # If there are any uncommitted changes we must abort immediately
 if [ $(git status -s | wc -l) != "0" ] ; then
@@ -130,16 +147,16 @@ mvn versions:set -DgenerateBackupPoms=false -DnewVersion=$RELEASE_VERSION || die
 git commit -a -m "Release version ${RELEASE_VERSION}" || die_with "Failed to commit updated pom.xml versions for release!"
 
 # TODO build and deploy the release
-mvn3 clean package source:jar javadoc:jar package gpg:sign deploy || die_with "Build/Deploy failure. Release failed."
+mvn3 clean package source:jar javadoc:jar package gpg:sign deploy || rollback_and_die_with "Build/Deploy failure. Release failed."
 
 # TODO tag the release (N.B. should this be before perform the release?)
-git tag "v${RELEASE_VERSION}" || die_with "Failed to create tag ${RELEASE_VERSION}!"
+git tag "v${RELEASE_VERSION}" || die_with "Failed to create tag ${RELEASE_VERSION}! Release has been deployed, however"
 
 ######################################
 # Start the next development process #
 ######################################
 
-mvn versions:set -DgenerateBackupPoms=false "-DnewVersion=${NEXT_VERSION}" || die_with "Failed to set next dev version on pom.xml files"
+mvn versions:set -DgenerateBackupPoms=false "-DnewVersion=${NEXT_VERSION}" || die_with "Failed to set next dev version on pom.xml files, please do this manually"
 
-git commit -a -m "Start next development version ${NEXT_VERSION}" || die_with "Failed to commit updated pom.xml versions for next dev version!"
+git commit -a -m "Start next development version ${NEXT_VERSION}" || die_with "Failed to commit updated pom.xml versions for next dev version! Please do this manually"
 
