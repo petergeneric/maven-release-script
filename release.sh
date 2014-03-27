@@ -99,7 +99,7 @@ shift $((OPTIND-1))
 
 die_without_command git perl wc
 
-if [ -n "$MVN" ] ; then
+if [ -z "$MVN" ] ; then
 	die_without_command mvn
 	MVN=mvn
 fi
