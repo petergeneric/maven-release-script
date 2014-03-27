@@ -13,13 +13,42 @@ function die_unless_xmllint_has_xpath() {
 	fi
 }
 
-if [ "$1" = "--help" ] ; then
+function usage() {
 	echo "Usage:"
-	echo "  $0"
+	echo "  $0 [ -r RELEASE_VERSION ] [ -n NEXT_DEV_VERSION ] [ -c ASSUMED_POM_VERSION ]"
+	echo "Updates release version, then builds and commits it"
 	echo ""
-	echo "Updates release version, then builds and commits "
-	exit 2
-fi
+	echo "  -r    Sets the release version number to use ('auto' to use the version in pom.xml)"
+	echo "  -n    Sets the next development version number to use (or 'auto' to increment release version)"
+	echo "  -c    Assume this as pom.xml version without inspecting it with xmllint"
+	echo ""
+	echo "  -h    For this message"
+	echo ""
+	echo "Version 1.0"
+}
+
+while getopts ":r:n:c:h:" o; do
+    case "${o}" in
+        -r)
+            RELEASE_VERSION="${OPTARG}"
+            ;;
+        -n)
+            NEXT_VERSION="${OPTARG}"
+            ;;
+        -c)
+        	CURRENT_VERSION="${OPTARG}"
+        	;;
+        -h)
+        	usage
+        	exit 0
+        	;;
+        *)
+            usage
+            exit 10
+            ;;
+    esac
+done
+shift $((OPTIND-1))
 
 
 # If there are any uncommitted changes we must abort immediately
@@ -41,6 +70,10 @@ CURRENT_VERSION=$(xmllint --xpath "/*[local-name() = 'project']/*[local-name() =
 RELEASE_VERSION_DEFAULT=$(echo "$CURRENT_VERSION" | perl -pe 's/-SNAPSHOT//')
 if [ -z "$RELEASE_VERSION" ] ; then
 	read -p "Version to release [${RELEASE_VERSION_DEFAULT}]" RELEASE_VERSION
+	
+	if [ "$RELEASE_VERSION" = "$CURRENT_VERSION" ] ; then
+		die_with "Release version requested is exactly the same as the current pom.xml version (${CURRENT_VERSION})!"
+	fi
 	
 	if [ -z "$RELEASE_VERSION" ] ; then
 		RELEASE_VERSION=$RELEASE_VERSION_DEFAULT
@@ -64,6 +97,11 @@ fi
 
 # Add -SNAPSHOT to the end (and make sure we don't accidentally have it twice)
 NEXT_VERSION="$(echo "$NEXT_VERSION" | perl -pe 's/-SNAPSHOT//gi')-SNAPSHOT"
+
+if [ "$NEXT_VERSION" = "${RELEASE_VERSION}-SNAPSHOT" ] ; then
+	die_with "Release version and next version are the same version!"
+fi
+
 
 echo ""
 echo "Using $RELEASE_VERSION for release"
