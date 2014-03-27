@@ -96,6 +96,7 @@ shift $((OPTIND-1))
 ###############################################
 # MAKE SURE SCRIPT DEPENDENCIES ARE INSTALLED #
 ###############################################
+
 die_without_command git mvn perl wc
 
 
@@ -114,6 +115,7 @@ fi
 ###############################################################
 # IF WE HAVE XMLLINT, SANITY CHECK THE RELEASE SIGNING POLICY #
 ###############################################################
+
 if [ -z "$MVN_TARGET_PRE_DEPLOY" ] ; then
 	echo "No release artifact signing has been requested"
 	has_xmllint_with_xpath
@@ -182,9 +184,10 @@ echo ""
 echo "Using $RELEASE_VERSION for release"
 echo "Using $NEXT_VERSION for next development version"
 
-#################################################################
+#############################
 # START THE RELEASE PROCESS #
-#################################################################
+#############################
+
 VCS_RELEASE_TAG="v${RELEASE_VERSION}"
 
 # if a release tag of this version already exists then abort immediately
@@ -192,10 +195,16 @@ if [ $(git tag -l "${VCS_RELEASE_TAG}" | wc -l) != "0" ] ; then
 	die_with "A tag already exists ${VCS_RELEASE_TAG} for the release version ${RELEASE_VERSION}"
 fi
 
+# Update the pom.xml versions
 mvn versions:set -DgenerateBackupPoms=false -DnewVersion=$RELEASE_VERSION || die_with "Failed to set release version on pom.xml files"
 
 # Commit the updated pom.xml files
 git commit -a -m "Release version ${RELEASE_VERSION}" || die_with "Failed to commit updated pom.xml versions for release!"
+
+echo ""
+echo " Starting build and deploy"
+echo ""
+
 
 # build and deploy the release
 mvn clean package source:jar javadoc:jar package $MVN_TARGET_PRE_DEPLOY deploy || rollback_and_die_with "Build/Deploy failure. Release failed."
@@ -204,7 +213,7 @@ mvn clean package source:jar javadoc:jar package $MVN_TARGET_PRE_DEPLOY deploy |
 git tag "v${RELEASE_VERSION}" || die_with "Failed to create tag ${RELEASE_VERSION}! Release has been deployed, however"
 
 ######################################
-# Start the next development process #
+# START THE NEXT DEVELOPMENT PROCESS #
 ######################################
 
 mvn versions:set -DgenerateBackupPoms=false "-DnewVersion=${NEXT_VERSION}" || die_with "Failed to set next dev version on pom.xml files, please do this manually"
