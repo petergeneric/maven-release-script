@@ -70,16 +70,16 @@ CURRENT_VERSION=$(xmllint --xpath "/*[local-name() = 'project']/*[local-name() =
 RELEASE_VERSION_DEFAULT=$(echo "$CURRENT_VERSION" | perl -pe 's/-SNAPSHOT//')
 if [ -z "$RELEASE_VERSION" ] ; then
 	read -p "Version to release [${RELEASE_VERSION_DEFAULT}]" RELEASE_VERSION
-	
-	if [ "$RELEASE_VERSION" = "$CURRENT_VERSION" ] ; then
-		die_with "Release version requested is exactly the same as the current pom.xml version (${CURRENT_VERSION})!"
-	fi
-	
+		
 	if [ -z "$RELEASE_VERSION" ] ; then
 		RELEASE_VERSION=$RELEASE_VERSION_DEFAULT
 	fi
 elif [ "$RELEASE_VERSION" = "auto" ] ; then
 	RELEASE_VERSION=$RELEASE_VERSION_DEFAULT
+fi
+
+if [ "$RELEASE_VERSION" = "$CURRENT_VERSION" ] ; then
+	die_with "Release version requested is exactly the same as the current pom.xml version (${CURRENT_VERSION})! Is the version in pom.xml definitely a -SNAPSHOT version?"
 fi
 
 
