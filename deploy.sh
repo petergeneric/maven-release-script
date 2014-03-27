@@ -29,22 +29,22 @@ function usage() {
 
 while getopts ":r:n:c:h:" o; do
     case "${o}" in
-        -r)
+        r)
             RELEASE_VERSION="${OPTARG}"
             ;;
-        -n)
+        n)
             NEXT_VERSION="${OPTARG}"
             ;;
-        -c)
+        c)
         	CURRENT_VERSION="${OPTARG}"
         	;;
-        -h)
+        h)
         	usage
         	exit 0
         	;;
         *)
             usage
-            exit 10
+            die_with "Unrecognised option ${o}"
             ;;
     esac
 done
