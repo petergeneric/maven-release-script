@@ -11,8 +11,6 @@ function die_unless_xmllint_has_xpath() {
 	if [ "$(xmllint 2>&1 | grep xpath | wc -l)" = "0" ] ; then
 		die_with "xmllint command is missing the --xpath option, please install the libxml2 version"
 	fi
-	
-	die_with test
 }
 
 if [ "$1" = "--help" ] ; then
