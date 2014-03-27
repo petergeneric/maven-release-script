@@ -46,13 +46,14 @@ function usage() {
 	echo "Maven git release script v1.0 (c) 2014 Peter Wright"
 	echo ""
 	echo "Usage:"
-	echo "  $0 [ -s ] [ -r RELEASE_VERSION ] [ -n NEXT_DEV_VERSION ] [ -c ASSUMED_POM_VERSION ]"
+	echo "  $0 [-a | [ -r RELEASE_VERSION ] [ -n NEXT_DEV_VERSION ] ]  [ -c ASSUMED_POM_VERSION ] [ -s ]"
 	echo "Updates release version, then builds and commits it"
 	echo ""
-	echo "  -s    If provided, digitally signs the release before deploying it"
+	echo "  -a    Shorthand for -a auto -n auto"
 	echo "  -r    Sets the release version number to use ('auto' to use the version in pom.xml)"
 	echo "  -n    Sets the next development version number to use (or 'auto' to increment release version)"
 	echo "  -c    Assume this as pom.xml version without inspecting it with xmllint"
+	echo "  -s    If provided, digitally signs the release before deploying it"
 	echo ""
 	echo "  -h    For this message"
 	echo ""
@@ -62,8 +63,12 @@ function usage() {
 # HANDLE COMMAND-LINE OPTIONS #
 ###############################
 
-while getopts "hsr:n:c:" o; do
+while getopts "ahsr:n:c:" o; do
     case "${o}" in
+    	a)
+            RELEASE_VERSION="auto"
+            NEXT_VERSION="auto"
+    		;;
         r)
             RELEASE_VERSION="${OPTARG}"
             ;;
