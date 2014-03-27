@@ -5,18 +5,29 @@ function die_with() {
 	exit 1
 }
 
-function die_unless_xmllint_has_xpath() {
-	which xmllint >/dev/null 2>/dev/null || die_with "Missing xmllint command, please install it (from libxml2)"
-	
+function has_command() {
+	which "$1" >/dev/null 2>/dev/null || return 1
+	return 0
+}
+
+function has_xmllint_with_xpath() {
 	if [ "$(xmllint 2>&1 | grep xpath | wc -l)" = "0" ] ; then
-		die_with "xmllint command is missing the --xpath option, please install the libxml2 version"
+		return 1
+	else
+		return 0
 	fi
+}
+
+function die_unless_xmllint_has_xpath() {
+	has_command xmllint || die_with "Missing xmllint command, please install it (from libxml2)"
+	
+	has_xmllint_with_xpath || die_with "xmllint command is missing the --xpath option, please install the libxml2 version"
 }
 
 function die_without_command() {
 	while [ -n "$1" ]
 	do
-		which "$1" >/dev/null 2>/dev/null || die_with "Missing required command: $1"
+		has_command "$1" || die_with "Missing required command: $1"
 		shift
 	done
 }
@@ -80,7 +91,7 @@ shift $((OPTIND-1))
 ###############################################
 # MAKE SURE SCRIPT DEPENDENCIES ARE INSTALLED #
 ###############################################
-die_without_command git mvn perl wc 
+die_without_command git mvn perl wc
 
 
 #########################################
@@ -93,6 +104,19 @@ if [ $(git status -s | wc -l) != "0" ] ; then
 	die_with "There are uncommitted changes, please commit or stash them to continue with the release:"
 else
 	echo "Good, no uncommitted changes found"
+fi
+
+###############################################################
+# IF WE HAVE XMLLINT, SANITY CHECK THE RELEASE SIGNING POLICY #
+###############################################################
+if [ -z "$MVN_TARGET_PRE_DEPLOY" ] ; then
+	if [ "$(has_xmllint_with_xpath)" = "0" ] ; then
+		PARENT_GROUP_ID=$(xmllint --xpath "/*[local-name() = 'project']/*[local-name() = 'parent']/*[local-name() = 'groupId']/text()" pom.xml)
+		
+		if [ "$PARENT_GROUP_ID" = "org.sonatype.oss" ] ; then
+			die_with "You have not requested release signing, however the pom.xml parent is $PARENT_GROUP_ID which requires signed uploads! Please add the -s parameter"
+		fi
+	fi
 fi
 
 #################################################################
