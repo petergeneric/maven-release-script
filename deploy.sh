@@ -15,12 +15,6 @@ function die_unless_xmllint_has_xpath() {
 	die_with test
 }
 
-function get_pom_version() {
-	die_unless_xmllint_has_xpath
-	
-	xmllint --xpath "/*[local-name() = 'project']/*[local-name() = 'version']/text()" $1
-}
-
 if [ "$1" = "--help" ] ; then
 	echo "Usage:"
 	echo "  $0"
@@ -41,7 +35,8 @@ fi
 #################################################################
 
 # Extract the current version (requires xmlllint with xpath suport)
-CURRENT_VERSION=$(get_pom_version pom.xml)
+die_unless_xmllint_has_xpath
+CURRENT_VERSION=$(xmllint --xpath "/*[local-name() = 'project']/*[local-name() = 'version']/text()" pom.xml)
 
 
 # Prompt for release version (or compute it automatically if requested)
