@@ -31,9 +31,9 @@ fi
 
 
 # If there are any uncommitted changes we must abort immediately
-if [ "$(git status -s | wc -l)" != "0" ] ; then
+if [ $(git status -s | wc -l) != "0" ] ; then
 	git status -s
-	die_with "There are uncommitted changes, please commit or stash them to continue with the release:
+	die_with "There are uncommitted changes, please commit or stash them to continue with the release:"
 fi
 
 #################################################################
@@ -82,8 +82,8 @@ echo "Using $NEXT_VERSION for next development version"
 VCS_RELEASE_TAG="v${RELEASE_VERSION}"
 
 # if a release tag of this version already exists then abort immediately
-if [ "$(git tag -l "${VCS_RELEASE_TAG}" | wc -l)" != "0" ]
-	die_with "A tag already exists (${VCS_RELEASE_TAG}) for the release version ${RELEASE_VERSION}"
+if [ $(git tag -l "${VCS_RELEASE_TAG}" | wc -l) != "0" ] ; then
+	die_with "A tag already exists ${VCS_RELEASE_TAG} for the release version ${RELEASE_VERSION}"
 fi
 
 mvn versions:set -DgenerateBackupPoms=false -DnewVersion=$RELEASE_VERSION || die_with "Failed to set release version on pom.xml files"
