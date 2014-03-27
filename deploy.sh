@@ -13,6 +13,14 @@ function die_unless_xmllint_has_xpath() {
 	fi
 }
 
+function die_without_command() {
+	while [ -n "$1" ]
+	do
+		which "$1" >/dev/null 2>/dev/null || die_with "Missing required command: $1"
+		shift
+	done
+}
+
 function rollback_and_die_with() {
 	echo "$*" >&2
 	
@@ -27,9 +35,10 @@ function usage() {
 	echo "Maven git release script v1.0 (c) 2014 Peter Wright"
 	echo ""
 	echo "Usage:"
-	echo "  $0 [ -r RELEASE_VERSION ] [ -n NEXT_DEV_VERSION ] [ -c ASSUMED_POM_VERSION ]"
+	echo "  $0 [ -s ] [ -r RELEASE_VERSION ] [ -n NEXT_DEV_VERSION ] [ -c ASSUMED_POM_VERSION ]"
 	echo "Updates release version, then builds and commits it"
 	echo ""
+	echo "  -s    If provided, digitally signs the release before deploying it"
 	echo "  -r    Sets the release version number to use ('auto' to use the version in pom.xml)"
 	echo "  -n    Sets the next development version number to use (or 'auto' to increment release version)"
 	echo "  -c    Assume this as pom.xml version without inspecting it with xmllint"
@@ -42,7 +51,7 @@ function usage() {
 # HANDLE COMMAND-LINE OPTIONS #
 ###############################
 
-while getopts "hr:n:c:" o; do
+while getopts "hsr:n:c:" o; do
     case "${o}" in
         r)
             RELEASE_VERSION="${OPTARG}"
@@ -52,6 +61,9 @@ while getopts "hr:n:c:" o; do
             ;;
         c)
         	CURRENT_VERSION="${OPTARG}"
+        	;;
+        s)
+        	MVN_TARGET_PRE_DEPLOY="gpg:sign"
         	;;
         h)
         	usage
@@ -64,6 +76,12 @@ while getopts "hr:n:c:" o; do
     esac
 done
 shift $((OPTIND-1))
+
+###############################################
+# MAKE SURE SCRIPT DEPENDENCIES ARE INSTALLED #
+###############################################
+die_without_command git mvn perl wc 
+
 
 #########################################
 # BAIL IF THERE ARE UNCOMMITTED CHANGES #
@@ -146,10 +164,10 @@ mvn versions:set -DgenerateBackupPoms=false -DnewVersion=$RELEASE_VERSION || die
 # Commit the updated pom.xml files
 git commit -a -m "Release version ${RELEASE_VERSION}" || die_with "Failed to commit updated pom.xml versions for release!"
 
-# TODO build and deploy the release
-mvn3 clean package source:jar javadoc:jar package gpg:sign deploy || rollback_and_die_with "Build/Deploy failure. Release failed."
+# build and deploy the release
+mvn clean package source:jar javadoc:jar package $MVN_TARGET_PRE_DEPLOY deploy || rollback_and_die_with "Build/Deploy failure. Release failed."
 
-# TODO tag the release (N.B. should this be before perform the release?)
+# tag the release (N.B. should this be before perform the release?)
 git tag "v${RELEASE_VERSION}" || die_with "Failed to create tag ${RELEASE_VERSION}! Release has been deployed, however"
 
 ######################################
