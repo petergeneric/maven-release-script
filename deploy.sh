@@ -28,7 +28,7 @@ function usage() {
 	echo ""
 }
 
-while getopts ":r:n:c:h:" o; do
+while getopts "hr:n:c:" o; do
     case "${o}" in
         r)
             RELEASE_VERSION="${OPTARG}"
