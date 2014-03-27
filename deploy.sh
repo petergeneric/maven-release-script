@@ -116,7 +116,7 @@ if [ -z "$MVN_TARGET_PRE_DEPLOY" ] ; then
 		PARENT_GROUP_ID=$(xmllint --xpath "/*[local-name() = 'project']/*[local-name() = 'parent']/*[local-name() = 'groupId']/text()" pom.xml)
 		
 		if [ "$PARENT_GROUP_ID" = "org.sonatype.oss" ] ; then
-			die_with "You have not requested release signing, however the pom.xml parent is $PARENT_GROUP_ID which requires signed uploads! Please add the -s parameter"
+			die_with "You have not requested release signing, however the pom.xml parent is $PARENT_GROUP_ID which requires signed uploads. Please add the -s parameter"
 		fi
 	fi
 else
