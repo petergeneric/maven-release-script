@@ -65,6 +65,8 @@ fi
 die_unless_xmllint_has_xpath
 CURRENT_VERSION=$(xmllint --xpath "/*[local-name() = 'project']/*[local-name() = 'version']/text()" pom.xml)
 
+echo "Current pom.xml version: $CURRENT_VERSION"
+echo ""
 
 # Prompt for release version (or compute it automatically if requested)
 RELEASE_VERSION_DEFAULT=$(echo "$CURRENT_VERSION" | perl -pe 's/-SNAPSHOT//')
