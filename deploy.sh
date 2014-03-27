@@ -14,6 +14,8 @@ function die_unless_xmllint_has_xpath() {
 }
 
 function usage() {
+	echo "Maven git release script v1.0 (c) 2014 Peter Wright"
+	echo ""
 	echo "Usage:"
 	echo "  $0 [ -r RELEASE_VERSION ] [ -n NEXT_DEV_VERSION ] [ -c ASSUMED_POM_VERSION ]"
 	echo "Updates release version, then builds and commits it"
@@ -24,7 +26,6 @@ function usage() {
 	echo ""
 	echo "  -h    For this message"
 	echo ""
-	echo "Version 1.0"
 }
 
 while getopts ":r:n:c:h:" o; do
