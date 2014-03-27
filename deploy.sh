@@ -56,15 +56,19 @@ shift $((OPTIND-1))
 if [ $(git status -s | wc -l) != "0" ] ; then
 	git status -s
 	die_with "There are uncommitted changes, please commit or stash them to continue with the release:"
+else
+	echo "Good, no uncommitted changes found"
 fi
 
 #################################################################
 # FIGURE OUT RELEASE VERSION NUMBER AND NEXT DEV VERSION NUMBER #
 #################################################################
 
-# Extract the current version (requires xmlllint with xpath suport)
-die_unless_xmllint_has_xpath
-CURRENT_VERSION=$(xmllint --xpath "/*[local-name() = 'project']/*[local-name() = 'version']/text()" pom.xml)
+if [ -z "$CURRENT_VERSION" ] ; then
+	# Extract the current version (requires xmlllint with xpath suport)
+	die_unless_xmllint_has_xpath
+	CURRENT_VERSION=$(xmllint --xpath "/*[local-name() = 'project']/*[local-name() = 'version']/text()" pom.xml)
+fi
 
 echo "Current pom.xml version: $CURRENT_VERSION"
 echo ""
