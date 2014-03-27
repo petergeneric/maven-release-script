@@ -97,7 +97,14 @@ shift $((OPTIND-1))
 # MAKE SURE SCRIPT DEPENDENCIES ARE INSTALLED #
 ###############################################
 
-die_without_command git mvn perl wc
+die_without_command git perl wc
+
+if [ -n "$MVN" ] ; then
+	die_without_command mvn
+	MVN=mvn
+fi
+
+echo "Using maven command: $MVN"
 
 
 #########################################
@@ -196,7 +203,7 @@ if [ $(git tag -l "${VCS_RELEASE_TAG}" | wc -l) != "0" ] ; then
 fi
 
 # Update the pom.xml versions
-mvn versions:set -DgenerateBackupPoms=false -DnewVersion=$RELEASE_VERSION || die_with "Failed to set release version on pom.xml files"
+$MVN versions:set -DgenerateBackupPoms=false -DnewVersion=$RELEASE_VERSION || die_with "Failed to set release version on pom.xml files"
 
 # Commit the updated pom.xml files
 git commit -a -m "Release version ${RELEASE_VERSION}" || die_with "Failed to commit updated pom.xml versions for release!"
@@ -207,7 +214,7 @@ echo ""
 
 
 # build and deploy the release
-mvn clean package source:jar javadoc:jar package $MVN_TARGET_PRE_DEPLOY deploy || rollback_and_die_with "Build/Deploy failure. Release failed."
+$MVN clean package source:jar javadoc:jar package $MVN_TARGET_PRE_DEPLOY deploy || rollback_and_die_with "Build/Deploy failure. Release failed."
 
 # tag the release (N.B. should this be before perform the release?)
 git tag "v${RELEASE_VERSION}" || die_with "Failed to create tag ${RELEASE_VERSION}! Release has been deployed, however"
@@ -216,7 +223,7 @@ git tag "v${RELEASE_VERSION}" || die_with "Failed to create tag ${RELEASE_VERSIO
 # START THE NEXT DEVELOPMENT PROCESS #
 ######################################
 
-mvn versions:set -DgenerateBackupPoms=false "-DnewVersion=${NEXT_VERSION}" || die_with "Failed to set next dev version on pom.xml files, please do this manually"
+$MVN versions:set -DgenerateBackupPoms=false "-DnewVersion=${NEXT_VERSION}" || die_with "Failed to set next dev version on pom.xml files, please do this manually"
 
 git commit -a -m "Start next development version ${NEXT_VERSION}" || die_with "Failed to commit updated pom.xml versions for next dev version! Please do this manually"
 
