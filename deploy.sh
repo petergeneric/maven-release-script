@@ -110,7 +110,9 @@ fi
 # IF WE HAVE XMLLINT, SANITY CHECK THE RELEASE SIGNING POLICY #
 ###############################################################
 if [ -z "$MVN_TARGET_PRE_DEPLOY" ] ; then
+	echo "No release signing requested"
 	if [ "$(has_xmllint_with_xpath)" = "0" ] ; then
+		echo "has xmllint with xpath"
 		PARENT_GROUP_ID=$(xmllint --xpath "/*[local-name() = 'project']/*[local-name() = 'parent']/*[local-name() = 'groupId']/text()" pom.xml)
 		
 		if [ "$PARENT_GROUP_ID" = "org.sonatype.oss" ] ; then
