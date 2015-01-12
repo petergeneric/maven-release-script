@@ -225,5 +225,4 @@ $MVN versions:set -DgenerateBackupPoms=false "-DnewVersion=${NEXT_VERSION}" || d
 
 git commit -a -m "Start next development version ${NEXT_VERSION}" || die_with "Failed to commit updated pom.xml versions for next dev version! Please do this manually"
 
-echo ""
-echo "Release complete. A tag has been created (ready to be pushed) and maven project is now at version ${NEXT_VERSION}. Happy developing"
+git push --tags || die_with "Failed to push tags. Please do this manually"
