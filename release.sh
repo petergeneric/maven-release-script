@@ -53,7 +53,6 @@ function usage() {
 	echo "  -r    Sets the release version number to use ('auto' to use the version in pom.xml)"
 	echo "  -n    Sets the next development version number to use (or 'auto' to increment release version)"
 	echo "  -c    Assume this as pom.xml version without inspecting it with xmllint"
-	echo "  -s    If provided, digitally signs the release before deploying it"
 	echo ""
 	echo "  -h    For this message"
 	echo ""
@@ -63,33 +62,30 @@ function usage() {
 # HANDLE COMMAND-LINE OPTIONS #
 ###############################
 
-while getopts "ahsr:n:c:" o; do
-    case "${o}" in
-    	a)
-            RELEASE_VERSION="auto"
-            NEXT_VERSION="auto"
-    		;;
-        r)
-            RELEASE_VERSION="${OPTARG}"
-            ;;
-        n)
-            NEXT_VERSION="${OPTARG}"
-            ;;
-        c)
-        	CURRENT_VERSION="${OPTARG}"
-        	;;
-        s)
-        	MVN_TARGET_PRE_DEPLOY="gpg:sign"
-        	;;
-        h)
-        	usage
-        	exit 0
-        	;;
-        *)
-            usage
-            die_with "Unrecognised option ${o}"
-            ;;
-    esac
+while getopts "ahr:n:c:" o; do
+	case "${o}" in
+		a)
+			RELEASE_VERSION="auto"
+			NEXT_VERSION="auto"
+			;;
+		r)
+			RELEASE_VERSION="${OPTARG}"
+			;;
+		n)
+			NEXT_VERSION="${OPTARG}"
+			;;
+		c)
+			CURRENT_VERSION="${OPTARG}"
+			;;
+		h)
+			usage
+			exit 0
+			;;
+		*)
+			usage
+			die_with "Unrecognised option ${o}"
+			;;
+	esac
 done
 shift $((OPTIND-1))
 
@@ -102,6 +98,8 @@ die_without_command git perl wc
 if [ -z "$MVN" ] ; then
 	die_without_command mvn
 	MVN=mvn
+else
+	die_without_command $MVN
 fi
 
 echo "Using maven command: $MVN"
@@ -214,7 +212,7 @@ echo ""
 
 
 # build and deploy the release
-$MVN clean package source:jar javadoc:jar package $MVN_TARGET_PRE_DEPLOY deploy || rollback_and_die_with "Build/Deploy failure. Release failed."
+$MVN -DperformRelease=true clean deploy || rollback_and_die_with "Build/Deploy failure. Release failed."
 
 # tag the release (N.B. should this be before perform the release?)
 git tag "v${RELEASE_VERSION}" || die_with "Failed to create tag ${RELEASE_VERSION}! Release has been deployed, however"
