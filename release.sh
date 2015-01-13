@@ -117,23 +117,6 @@ else
 	echo "Good, no uncommitted changes found"
 fi
 
-###############################################################
-# IF WE HAVE XMLLINT, SANITY CHECK THE RELEASE SIGNING POLICY #
-###############################################################
-
-if [ -z "$MVN_TARGET_PRE_DEPLOY" ] ; then
-	echo "No release artifact signing has been requested"
-	has_xmllint_with_xpath
-	if [ "$?" = "0" ] ; then
-		PARENT_GROUP_ID=$(xmllint --xpath "/*[local-name() = 'project']/*[local-name() = 'parent']/*[local-name() = 'groupId']/text()" pom.xml)
-		
-		if [ "$PARENT_GROUP_ID" = "org.sonatype.oss" ] ; then
-			die_with "You have not requested release signing, however the pom.xml parent is $PARENT_GROUP_ID which requires signed uploads. Please add the -s parameter"
-		fi
-	fi
-else
-	echo "Release artifact signing requested"
-fi
 
 #################################################################
 # FIGURE OUT RELEASE VERSION NUMBER AND NEXT DEV VERSION NUMBER #
@@ -225,4 +208,5 @@ $MVN versions:set -DgenerateBackupPoms=false "-DnewVersion=${NEXT_VERSION}" || d
 
 git commit -a -m "Start next development version ${NEXT_VERSION}" || die_with "Failed to commit updated pom.xml versions for next dev version! Please do this manually"
 
+git push || die_with "Failed to push commits. Please do this manually"
 git push --tags || die_with "Failed to push tags. Please do this manually"
