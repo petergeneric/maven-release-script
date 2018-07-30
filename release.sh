@@ -20,7 +20,7 @@ function has_xmllint_with_xpath() {
 
 function die_unless_xmllint_has_xpath() {
 	has_command xmllint || die_with "Missing xmllint command, please install it (from libxml2)"
-	
+
 	has_xmllint_with_xpath || die_with "xmllint command is missing the --xpath option, please install the libxml2 version"
 }
 
@@ -34,11 +34,11 @@ function die_without_command() {
 
 function rollback_and_die_with() {
 	echo "$*" >&2
-	
+
 	echo "Resetting release commit to return you to the same working state as before attempting a deploy"
 	echo "> git reset --hard HEAD^1"
 	git reset --hard HEAD^1 || echo "Git reset command failed!"
-	
+
 	exit 1
 }
 
@@ -46,13 +46,14 @@ function usage() {
 	echo "Maven git release script v1.0 (c) 2014 Peter Wright"
 	echo ""
 	echo "Usage:"
-	echo "  $0 [-a | [ -r RELEASE_VERSION ] [ -n NEXT_DEV_VERSION ] ]  [ -c ASSUMED_POM_VERSION ] [ -s ]"
+	echo "  $0 [-a | [ -r RELEASE_VERSION ] [ -n NEXT_DEV_VERSION ] ]  [ -c ASSUMED_POM_VERSION ] [ -s ] [-i]"
 	echo "Updates release version, then builds and commits it"
 	echo ""
 	echo "  -a    Shorthand for -a auto -n auto"
 	echo "  -r    Sets the release version number to use ('auto' to use the version in pom.xml)"
 	echo "  -n    Sets the next development version number to use (or 'auto' to increment release version)"
 	echo "  -c    Assume this as pom.xml version without inspecting it with xmllint"
+	echo "  -i    Ignore untracked git files"
 	echo ""
 	echo "  -h    For this message"
 	echo ""
@@ -62,7 +63,7 @@ function usage() {
 # HANDLE COMMAND-LINE OPTIONS #
 ###############################
 
-while getopts "ahr:n:c:" o; do
+while getopts "ahr:n:c:i" o; do
 	case "${o}" in
 		a)
 			RELEASE_VERSION="auto"
@@ -76,6 +77,9 @@ while getopts "ahr:n:c:" o; do
 			;;
 		c)
 			CURRENT_VERSION="${OPTARG}"
+			;;
+		i)
+			IGNORE_UNTRACKED=true
 			;;
 		h)
 			usage
@@ -109,12 +113,21 @@ echo "Using maven command: $MVN"
 # BAIL IF THERE ARE UNCOMMITTED CHANGES #
 #########################################
 
-# If there are any uncommitted changes we must abort immediately
-if [ $(git status -s | wc -l) != "0" ] ; then
-	git status -s
-	die_with "There are uncommitted changes, please commit or stash them to continue with the release:"
+# If there are any uncommitted changes we must abort immediately, if IGNORE_UNTRACKED is true git will ignore untracked files
+if [ "$IGNORE_UNTRACKED" = true ] ; then
+	if [ $(git status -suno | wc -l) != "0" ] ; then
+		git status -suno
+		die_with "There are uncommitted changes, please commit or stash them to continue with the release:"
+	else
+		echo "Good, no uncommitted changes found"
+	fi
 else
-	echo "Good, no uncommitted changes found"
+	if [ $(git status -s | wc -l) != "0" ] ; then
+		git status -s
+		die_with "There are uncommitted changes, please commit or stash them to continue with the release:"
+	else
+		echo "Good, no uncommitted changes found"
+	fi
 fi
 
 
@@ -135,7 +148,7 @@ echo ""
 RELEASE_VERSION_DEFAULT=$(echo "$CURRENT_VERSION" | perl -pe 's/-SNAPSHOT//')
 if [ -z "$RELEASE_VERSION" ] ; then
 	read -p "Version to release [${RELEASE_VERSION_DEFAULT}]" RELEASE_VERSION
-		
+
 	if [ -z "$RELEASE_VERSION" ] ; then
 		RELEASE_VERSION=$RELEASE_VERSION_DEFAULT
 	fi
@@ -152,7 +165,7 @@ fi
 NEXT_VERSION_DEFAULT=$(echo "$RELEASE_VERSION" | perl -pe 's{^(([0-9]\.)+)?([0-9]+)$}{$1 . ($3 + 1)}e')
 if [ -z "$NEXT_VERSION" ] ; then
 	read -p "Next snapshot version [${NEXT_VERSION_DEFAULT}]" NEXT_VERSION
-	
+
 	if [ -z "$NEXT_VERSION" ] ; then
 		NEXT_VERSION=$NEXT_VERSION_DEFAULT
 	fi
