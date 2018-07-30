@@ -10,14 +10,14 @@ Usage
 
 ```
 Usage:
-  release.sh [-a | [ -r RELEASE_VERSION ] [ -n NEXT_DEV_VERSION ] ]  [ -c ASSUMED_POM_VERSION ] [ -s ]
+  release.sh [-a | [ -r RELEASE_VERSION ] [ -n NEXT_DEV_VERSION ] ]  [ -c ASSUMED_POM_VERSION ] [ -s ] [-i]
 Updates release version, then builds and commits it
 
   -a    Shorthand for -a auto -n auto
   -r    Sets the release version number to use ('auto' to use the version in pom.xml)
   -n    Sets the next development version number to use (or 'auto' to increment release version)
   -c    Assume this as pom.xml version without inspecting it with xmllint
-  -s    If provided, digitally signs the release before deploying it
+  -i    Ignore untracked git files
 
   -h    For this message
 ```
